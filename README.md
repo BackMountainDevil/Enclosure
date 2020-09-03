@@ -18,3 +18,7 @@ CAU-农业信息化开发实训||-第四小分队
 成员一（ZZQ）、二（LZW）、**五（ZXG）**：圈地信息的数据库导入保存，此为本软件重要功能，具体数据库实现要求同上-即实现数据库表单的本地或AS自带SQLite保存，实现模拟后台服务器数据库上传下载（加分）。可与其他相关功能人员交流协同开发。
 # References
 [相关学习案例](https://github.com/BackMountainDevil/AndroidStudioLearn)
+[SDK](https://lbs.amap.com/api/android-sdk/download/)
+[入门指南](https://lbs.amap.com/api/android-location-sdk/gettingstarted/#creatproject)
+[配置工程](https://lbs.amap.com/api/android-sdk/guide/create-project/android-studio-create-project)
+[key](https://lbs.amap.com/api/android-location-sdk/guide/create-project/get-key/)
