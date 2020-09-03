@@ -2,6 +2,8 @@ package com.example.enclosure;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -15,6 +17,10 @@ import com.amap.api.maps2d.model.CameraPosition;
 import com.amap.api.maps2d.model.LatLng;
 import com.amap.api.maps2d.model.Marker;
 import com.amap.api.maps2d.model.MarkerOptions;
+import com.amap.api.maps2d.model.Polygon;
+import com.amap.api.maps2d.model.PolygonOptions;
+import com.amap.api.maps2d.model.Polyline;
+import com.amap.api.maps2d.model.PolylineOptions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,10 +31,15 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
     private MapView mMapView = null;
     private AMap aMap = null;
     private UiSettings mUiSettings;                     //定位按钮
-    List<LatLng> latLngs = new ArrayList<LatLng>();     //坐标列表,可以用latLngs.size()获取点数
-
-
+    private List<LatLng> latLngs = new ArrayList<>();     //坐标列表,可以用latLngs.size()获取点数
+    //private Polygon polygon;
+    //private PolygonOptions polygonOptions;
+    private Polyline polyline;       //线段
     private Button btn_click;
+
+
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +74,9 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
         mUiSettings.setZoomControlsEnabled(false);  //取消显示默认的缩放按钮
         aMap.setMyLocationEnabled(true);// 可触发定位并显示当前位置
 
+//        polygon = new Polygon();
+//        polygonOptions = new PolygonOptions();
+
         btn_click = findViewById(R.id.btn_gps);
 
         btn_click.setOnClickListener(new MyOnClickListener());
@@ -87,8 +101,32 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
     @Override
     public void onMapLongClick(LatLng point) {
         latLngs.add(point);
+
+//        polygonOptions.add(point);
+
         final Marker marker = aMap.addMarker(new MarkerOptions().position(point).title("").snippet("DefaultMarker"));
         //Toast.makeText(getApplicationContext(),  "long pressed, point=" + point, Toast.LENGTH_SHORT).show();
+
+        //手动绘制圈地部分，不包含首尾自动封闭，如果边框的起点与终点不一致，API会自动将它封闭。
+//        if(latLngs.size() >= 3)
+//        {
+//            //polygonOptions.addAll(latLngs);
+//            polygonOptions.strokeWidth(15) // 多边形的边框
+//                    .strokeColor(Color.argb(50, 1, 1, 1)) // 边框颜色
+//                    .fillColor(Color.argb(1, 1, 1, 1));   // 多边形的填充色
+//
+//            polygon.setPoints(latLngs);
+//            aMap.invalidate();//刷新地图
+//
+//        }
+
+        //手动绘制圈地部分，不包含首尾自动封闭
+        if(latLngs.size() >= 2)
+        {
+            polyline = aMap.addPolyline((new PolylineOptions())
+                    .addAll(latLngs)
+                    .width(10).color(Color.argb(255, 1, 1, 1)));
+        }
     }
 
     /**
@@ -130,8 +168,7 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
         //to do
 
 
-        Toast.makeText(getApplicationContext(), "Area ： " +area + " 单位", Toast.LENGTH_SHORT).show();
-
+        Toast.makeText(getApplicationContext(), " point num：" +latLngs.size() + "Area ： " +area + " 单位", Toast.LENGTH_SHORT).show();
 
     }
     @Override
