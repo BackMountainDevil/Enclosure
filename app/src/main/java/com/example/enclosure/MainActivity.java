@@ -11,14 +11,17 @@ import android.widget.Toast;
 import com.amap.api.maps2d.AMap;
 import com.amap.api.maps2d.MapView;
 import com.amap.api.maps2d.UiSettings;
-import com.amap.api.maps2d.model.MyLocationStyle;
+import com.amap.api.maps2d.model.CameraPosition;
+import com.amap.api.maps2d.model.LatLng;
 
 
-public class MainActivity extends AppCompatActivity  {
+
+public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickListener,
+        AMap.OnMapLongClickListener, AMap.OnCameraChangeListener {
     private MapView mMapView = null;
     private AMap aMap = null;
     private UiSettings mUiSettings;//定位按钮
-    private MyLocationStyle myLocationStyle;   //蓝点
+
 
     private Button btn_click;
 
@@ -60,21 +63,61 @@ public class MainActivity extends AppCompatActivity  {
         btn_click = findViewById(R.id.btn_gps);
 
         btn_click.setOnClickListener(new MyOnClickListener());
+        aMap.setOnMapClickListener(this);// 对amap添加单击地图事件监听器
+        aMap.setOnMapLongClickListener(this);// 对amap添加长按地图事件监听器
+        aMap.setOnCameraChangeListener(this);// 对amap添加移动地图事件监听器
+
     }
 
+
+    /**
+     * 对单击地图事件回调
+     */
+    @Override
+    public void onMapClick(LatLng point) {
+        Toast.makeText(getApplicationContext(), "tapped, point=" + point, Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * 对长按地图事件回调
+     */
+    @Override
+    public void onMapLongClick(LatLng point) {
+
+        Toast.makeText(getApplicationContext(),  "long pressed, point=" + point, Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * 对正在移动地图事件回调
+     */
+    @Override
+    public void onCameraChange(CameraPosition cameraPosition) {
+        //Toast.makeText(getApplicationContext(), "onCameraChange:" + cameraPosition.toString(), Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * 对移动地图结束事件回调
+     */
+    @Override
+    public void onCameraChangeFinish(CameraPosition cameraPosition) {
+
+    }
+
+
+
     class MyOnClickListener implements View.OnClickListener {
-        @Override
-        public void onClick(View v) { // 点击事件的处理方法
-            if (v.getId() == R.id.btn_gps) { // 判断是否为btn_click被点击
-                if(aMap.isMyLocationEnabled())
-                {
-                    double la = aMap.getMyLocation().getLatitude();
-                    double lo = aMap.getMyLocation().getLongitude();
-                    Toast.makeText(getApplicationContext(), " la：" +la+" lo: "+lo, Toast.LENGTH_SHORT).show();
+            @Override
+            public void onClick(View v) { // 点击事件的处理方法
+                if (v.getId() == R.id.btn_gps) { // 判断是否为btn_click被点击
+                    if(aMap.isMyLocationEnabled())
+                    {
+                        double la = aMap.getMyLocation().getLatitude();
+                        double lo = aMap.getMyLocation().getLongitude();
+                        Toast.makeText(getApplicationContext(), " la：" +la+" lo: "+lo, Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         }
-    }
 
     @Override
     protected void onDestroy() {
