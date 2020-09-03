@@ -36,6 +36,7 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
     //private PolygonOptions polygonOptions;
     private Polyline polyline;       //线段
     private Button btn_click;
+    private Button btn_down;
 
 
 
@@ -78,8 +79,10 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
 //        polygonOptions = new PolygonOptions();
 
         btn_click = findViewById(R.id.btn_gps);
+        btn_down = findViewById(R.id.btn_down);
 
         btn_click.setOnClickListener(new MyOnClickListener());
+        btn_down.setOnClickListener(new MyOnClickListener());
         aMap.setOnMapClickListener(this);// 对amap添加单击地图事件监听器
         aMap.setOnMapLongClickListener(this);// 对amap添加长按地图事件监听器
         aMap.setOnCameraChangeListener(this);// 对amap添加移动地图事件监听器
@@ -159,6 +162,10 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
 
                         getArea(latLngs);
                     }
+                }
+                else if(v.getId() == R.id.btn_down)
+                {
+                    Toast.makeText(getApplicationContext(), " Btn Down click" , Toast.LENGTH_SHORT).show();
                 }
             }
         }
