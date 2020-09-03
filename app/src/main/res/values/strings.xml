@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">Enclosure</string>
-    <string name="btn_gps">GPS</string>
+    <string name="btn_gps">Get Area</string>
 </resources>

@@ -16,12 +16,16 @@ import com.amap.api.maps2d.model.LatLng;
 import com.amap.api.maps2d.model.Marker;
 import com.amap.api.maps2d.model.MarkerOptions;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickListener,
         AMap.OnMapLongClickListener, AMap.OnCameraChangeListener {
     private MapView mMapView = null;
     private AMap aMap = null;
-    private UiSettings mUiSettings;//定位按钮
+    private UiSettings mUiSettings;                     //定位按钮
+    List<LatLng> latLngs = new ArrayList<LatLng>();     //坐标列表,可以用latLngs.size()获取点数
 
 
     private Button btn_click;
@@ -82,8 +86,9 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
      */
     @Override
     public void onMapLongClick(LatLng point) {
+        latLngs.add(point);
         final Marker marker = aMap.addMarker(new MarkerOptions().position(point).title("").snippet("DefaultMarker"));
-        Toast.makeText(getApplicationContext(),  "long pressed, point=" + point, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(getApplicationContext(),  "long pressed, point=" + point, Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -103,7 +108,6 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
     }
 
 
-
     class MyOnClickListener implements View.OnClickListener {
             @Override
             public void onClick(View v) { // 点击事件的处理方法
@@ -112,12 +116,24 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
                     {
                         double la = aMap.getMyLocation().getLatitude();
                         double lo = aMap.getMyLocation().getLongitude();
-                        Toast.makeText(getApplicationContext(), " la：" +la+" lo: "+lo, Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(getApplicationContext(), " la：" +la+" lo: "+lo, Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(getApplicationContext(), " point num：" +latLngs.size(), Toast.LENGTH_SHORT).show();
+
+                        getArea(latLngs);
                     }
                 }
             }
         }
 
+    public void  getArea(List<LatLng> latLngs)  {
+        double area = 0;
+        //to do
+
+
+        Toast.makeText(getApplicationContext(), "Area ： " +area + " 单位", Toast.LENGTH_SHORT).show();
+
+
+    }
     @Override
     protected void onDestroy() {
         super.onDestroy();
