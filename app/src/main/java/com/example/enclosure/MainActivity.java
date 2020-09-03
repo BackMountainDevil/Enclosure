@@ -13,7 +13,8 @@ import com.amap.api.maps2d.MapView;
 import com.amap.api.maps2d.UiSettings;
 import com.amap.api.maps2d.model.CameraPosition;
 import com.amap.api.maps2d.model.LatLng;
-
+import com.amap.api.maps2d.model.Marker;
+import com.amap.api.maps2d.model.MarkerOptions;
 
 
 public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickListener,
@@ -44,8 +45,6 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
             aMap = mMapView.getMap();
             setUpMap();
         }
-
-
     }
 
     /**
@@ -83,7 +82,7 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
      */
     @Override
     public void onMapLongClick(LatLng point) {
-
+        final Marker marker = aMap.addMarker(new MarkerOptions().position(point).title("").snippet("DefaultMarker"));
         Toast.makeText(getApplicationContext(),  "long pressed, point=" + point, Toast.LENGTH_SHORT).show();
     }
 
