@@ -33,13 +33,13 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
     private MapView mMapView = null;
     private AMap aMap = null;
     private UiSettings mUiSettings;                     //定位按钮
+    private Marker marker = null;
+    private List<Marker> mMarkers = new ArrayList<>();
     private List<LatLng> latLngs = new ArrayList<>();     //坐标列表,可以用latLngs.size()获取点数
     private Polygon polygon;                                //圈地封闭区域
 //    private Polyline polyline;                            //圈地边框的线段
     private Button btn_click;
     private Button btn_down;
-
-
 
 
 
@@ -107,13 +107,15 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
         latLngs.add(point);
 
 
-        final Marker marker = aMap.addMarker(new MarkerOptions().position(point).title("").snippet("DefaultMarker"));
+        marker = aMap.addMarker(new MarkerOptions().position(point).title("").snippet("DefaultMarker"));
+        marker.setSnippet(marker.getId()+marker.getPosition());
+
         //Toast.makeText(getApplicationContext(),  "long pressed, point=" + point, Toast.LENGTH_SHORT).show();
 
-        //手动绘制圈地部分，如果边框的起点与终点不一致，API会自动将它封闭。，test best
+        //手动绘制圈地部分，如果边框的起点与终点不一致，API会自动将它封闭。test best
         if(latLngs.size() >= 3)
         {
-            if(polygon != null)
+            if(polygon != null)         //清除上一次的图形，避免重叠变丑
             {polygon.remove();}
             polygon = aMap.addPolygon(new PolygonOptions().addAll(Collections.unmodifiableList(latLngs))
                     .strokeColor(Color.argb(50, 1, 1, 1))
@@ -170,7 +172,7 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
                     }
                     else
                     {
-                        Toast.makeText(getApplicationContext(), " Btn  click" +latLngs.get(0), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), " Btn  click" +marker.getId(), Toast.LENGTH_SHORT).show();
 //                    polyline = aMap.addPolyline((new PolylineOptions())           //未知错误点击闪退，改成1-size也是
 //                            .add(latLngs.get(0),latLngs.get(latLngs.size()))
 //                            .width(10).color(Color.argb(255, 1, 1, 1)));
@@ -178,8 +180,10 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
 //                        polyline = aMap.addPolyline((new PolylineOptions())       //未知错误点击闪退
 //                                .add(new LatLng(latLngs.get(0).longitude,latLngs.get(0).latitude),
 //                                        new LatLng(latLngs.get(latLngs.size()).longitude, latLngs.get(latLngs.size()).latitude))
-//                                .width(10).color(Color.argb(255, 1, 1, 1)));polu
+//                                .width(10).color(Color.argb(255, 1, 1, 1)));polum
 
+
+//                        marker.destroy(); //只能清除上一个点位
 //                        if(polygon != null)  //清除多边形， but 点尚未清除
 //                        {polygon.remove();}
 
