@@ -10,6 +10,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 
+import com.amap.api.interfaces.IPolygon;
 import com.amap.api.maps2d.AMap;
 import com.amap.api.maps2d.MapView;
 import com.amap.api.maps2d.UiSettings;
@@ -23,6 +24,7 @@ import com.amap.api.maps2d.model.Polyline;
 import com.amap.api.maps2d.model.PolylineOptions;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -32,9 +34,8 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
     private AMap aMap = null;
     private UiSettings mUiSettings;                     //定位按钮
     private List<LatLng> latLngs = new ArrayList<>();     //坐标列表,可以用latLngs.size()获取点数
-    //private Polygon polygon;
-    //private PolygonOptions polygonOptions;
-    private Polyline polyline;       //线段
+    private Polygon polygon;                                //圈地封闭区域
+//    private Polyline polyline;                            //圈地边框的线段
     private Button btn_click;
     private Button btn_down;
 
@@ -79,7 +80,7 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
 //        polygonOptions = new PolygonOptions();
 
         btn_click = findViewById(R.id.btn_gps);
-        btn_down = findViewById(R.id.btn_down);
+        btn_down = findViewById(R.id.btn_reset);
 
         btn_click.setOnClickListener(new MyOnClickListener());
         btn_down.setOnClickListener(new MyOnClickListener());
@@ -105,31 +106,29 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
     public void onMapLongClick(LatLng point) {
         latLngs.add(point);
 
-//        polygonOptions.add(point);
 
         final Marker marker = aMap.addMarker(new MarkerOptions().position(point).title("").snippet("DefaultMarker"));
         //Toast.makeText(getApplicationContext(),  "long pressed, point=" + point, Toast.LENGTH_SHORT).show();
 
-        //手动绘制圈地部分，不包含首尾自动封闭，如果边框的起点与终点不一致，API会自动将它封闭。
-//        if(latLngs.size() >= 3)
-//        {
-//            //polygonOptions.addAll(latLngs);
-//            polygonOptions.strokeWidth(15) // 多边形的边框
-//                    .strokeColor(Color.argb(50, 1, 1, 1)) // 边框颜色
-//                    .fillColor(Color.argb(1, 1, 1, 1));   // 多边形的填充色
-//
-//            polygon.setPoints(latLngs);
-//            aMap.invalidate();//刷新地图
-//
-//        }
+        //手动绘制圈地部分，如果边框的起点与终点不一致，API会自动将它封闭。，test best
+        if(latLngs.size() >= 3)
+        {
+            if(polygon != null)
+            {polygon.remove();}
+            polygon = aMap.addPolygon(new PolygonOptions().addAll(Collections.unmodifiableList(latLngs))
+                    .strokeColor(Color.argb(50, 1, 1, 1))
+                    .fillColor(Color.argb(50, 1, 1, 1)));
+            aMap.invalidate();//刷新地图
+        }
 
-        //手动绘制圈地部分，不包含首尾自动封闭
+/*        //手动绘制圈地部分的线段，不包含首尾自动封闭，test good
         if(latLngs.size() >= 2)
         {
             polyline = aMap.addPolyline((new PolylineOptions())
                     .addAll(latLngs)
                     .width(10).color(Color.argb(255, 1, 1, 1)));
-        }
+            aMap.invalidate();//刷新地图
+        }*/
     }
 
     /**
@@ -152,7 +151,7 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
     class MyOnClickListener implements View.OnClickListener {
             @Override
             public void onClick(View v) { // 点击事件的处理方法
-                if (v.getId() == R.id.btn_gps) { // 判断是否为btn_click被点击
+                if (v.getId() == R.id.btn_gps) {
                     if(aMap.isMyLocationEnabled())
                     {
                         double la = aMap.getMyLocation().getLatitude();
@@ -163,9 +162,36 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
                         getArea(latLngs);
                     }
                 }
-                else if(v.getId() == R.id.btn_down)
+                else if(v.getId() == R.id.btn_reset)
                 {
-                    Toast.makeText(getApplicationContext(), " Btn Down click" , Toast.LENGTH_SHORT).show();
+                    if(latLngs.size() < 3)
+                    {
+                        Toast.makeText(getApplicationContext(), "绘制点数少于3！！！" , Toast.LENGTH_SHORT).show();
+                    }
+                    else
+                    {
+                        Toast.makeText(getApplicationContext(), " Btn  click" +latLngs.get(0), Toast.LENGTH_SHORT).show();
+//                    polyline = aMap.addPolyline((new PolylineOptions())           //未知错误点击闪退，改成1-size也是
+//                            .add(latLngs.get(0),latLngs.get(latLngs.size()))
+//                            .width(10).color(Color.argb(255, 1, 1, 1)));
+
+//                        polyline = aMap.addPolyline((new PolylineOptions())       //未知错误点击闪退
+//                                .add(new LatLng(latLngs.get(0).longitude,latLngs.get(0).latitude),
+//                                        new LatLng(latLngs.get(latLngs.size()).longitude, latLngs.get(latLngs.size()).latitude))
+//                                .width(10).color(Color.argb(255, 1, 1, 1)));polu
+
+//                        if(polygon != null)  //清除多边形， but 点尚未清除
+//                        {polygon.remove();}
+
+//                        polygon = aMap.addPolygon(new PolygonOptions().addAll(Collections.unmodifiableList(latLngs))
+//                                .strokeColor(Color.argb(50, 1, 1, 1))
+//                                .fillColor(Color.argb(50, 1, 1, 1)));
+//                        aMap.invalidate();//刷新地图
+
+
+
+                    }
+
                 }
             }
         }

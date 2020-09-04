@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">Enclosure</string>
     <string name="btn_gps">Get Area</string>
-    <string name="btn_down">Down</string>
+    <string name="btn_reset">Reset</string>
 </resources>
