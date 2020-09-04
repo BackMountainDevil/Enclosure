@@ -34,12 +34,13 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
     private Polygon polygon;                                //圈地封闭区域
     private Button btn_click;
     private Button btn_down;
+    private Button btn_maker;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle("大师抄的地图");
+        setTitle("大师地图");
         setContentView(R.layout.activity_main);
         mMapView = findViewById(R.id.mapview);       //获取地图控件引用
         mMapView.onCreate(savedInstanceState);// 此方法须覆写，虚拟机需要在很多情况下保存地图绘制的当前状态。
@@ -69,40 +70,31 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
         mUiSettings.setZoomControlsEnabled(false);  //取消显示默认的缩放按钮
         aMap.setMyLocationEnabled(true);// 可触发定位并显示当前位置
 
-//        polygon = new Polygon();
-//        polygonOptions = new PolygonOptions();
 
         btn_click = findViewById(R.id.btn_gps);
         btn_down = findViewById(R.id.btn_reset);
+        btn_maker = findViewById(R.id.btn_maker);
 
         btn_click.setOnClickListener(new MyOnClickListener());
         btn_down.setOnClickListener(new MyOnClickListener());
+        btn_maker.setOnClickListener(new MyOnClickListener());
+
         aMap.setOnMapClickListener(this);// 对amap添加单击地图事件监听器
         aMap.setOnMapLongClickListener(this);// 对amap添加长按地图事件监听器
         aMap.setOnCameraChangeListener(this);// 对amap添加移动地图事件监听器
-
     }
 
 
     /**
-     * 对单击地图事件回调
+     * 对单击地图事件回调，缩放会误触发????
      */
     @Override
     public void onMapClick(LatLng point) {
-        Toast.makeText(getApplicationContext(), "tapped, point=" + point, Toast.LENGTH_SHORT).show();
-    }
-
-    /**
-     * 对长按地图事件回调
-     */
-    @Override
-    public void onMapLongClick(LatLng point) {
+        //Toast.makeText(getApplicationContext(), "tapped, point=" + point, Toast.LENGTH_SHORT).show();
         latLngs.add(point);
         marker = aMap.addMarker(new MarkerOptions().position(point).title("").snippet("DefaultMarker"));        //在地图上标记点
         marker.setSnippet(marker.getId()+marker.getPosition());
         mMarkers.add(marker);
-
-        //Toast.makeText(getApplicationContext(),  "long pressed, point=" + point, Toast.LENGTH_SHORT).show();
 
         //手动绘制圈地部分，如果边框的起点与终点不一致，API会自动将它封闭。test best
         if(latLngs.size() >= 3)
@@ -114,6 +106,87 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
                     .fillColor(Color.argb(50, 1, 1, 1)));
             aMap.invalidate();//刷新地图
         }
+    }
+
+
+    /**
+     * 按钮短按时回调
+     */
+    class MyOnClickListener implements View.OnClickListener {
+            @Override
+            public void onClick(View v) { // 点击事件的处理方法
+                if (v.getId() == R.id.btn_gps) {        //完成，弹窗显示点位坐标和面积，请求输入
+                    if(aMap.isMyLocationEnabled())
+                    {
+                        getArea(latLngs);
+                    }
+                }
+                else if(v.getId() == R.id.btn_reset)        //撤销
+                {
+                    clearAll();
+                }
+                else if(v.getId() == R.id.btn_maker)        //gps采点
+                {
+                    gpsMaker();
+                }
+            }
+        }
+
+    public void  getArea(List<LatLng> latLngs)  {
+        double area = 0;
+        //to do
+
+
+        Toast.makeText(getApplicationContext(), " point num：" +latLngs.size() + "Area ： " +area + " 单位", Toast.LENGTH_SHORT).show();
+
+    }
+
+    public void gpsMaker()
+    {
+        //定位到当前位置并标记Maker
+        //参考onMapClick(）
+
+        Toast.makeText(getApplicationContext(), "GPS采点接口" , Toast.LENGTH_SHORT).show();
+    }
+
+    public void clearAll()
+    {
+        if(latLngs.size() != 0)  //清除全部的多边形和点
+        {
+            polygon.remove();                       //删除多边形
+            for (Marker marker : mMarkers) {        //遍历删除点
+                //marker.remove();
+                marker.destroy();
+            }
+            mMarkers.clear();                       //删除点集合
+            latLngs.clear();                        //删除坐标集合
+            aMap.invalidate();//刷新地图
+        }
+        else
+        {Toast.makeText(getApplicationContext(), "尚未标记采点，无需撤销点位" , Toast.LENGTH_SHORT).show();}
+    }
+    /**
+     * 对长按地图事件回调
+     */
+    @Override
+    public void onMapLongClick(LatLng point) {
+//        latLngs.add(point);
+//        marker = aMap.addMarker(new MarkerOptions().position(point).title("").snippet("DefaultMarker"));        //在地图上标记点
+//        marker.setSnippet(marker.getId()+marker.getPosition());
+//        mMarkers.add(marker);
+//
+//        //Toast.makeText(getApplicationContext(),  "long pressed, point=" + point, Toast.LENGTH_SHORT).show();
+//
+//        //手动绘制圈地部分，如果边框的起点与终点不一致，API会自动将它封闭。test best
+//        if(latLngs.size() >= 3)
+//        {
+//            if(polygon != null)         //清除上一次的图形，避免重叠变丑
+//            {polygon.remove();}
+//            polygon = aMap.addPolygon(new PolygonOptions().addAll(Collections.unmodifiableList(latLngs))
+//                    .strokeColor(Color.argb(50, 1, 1, 1))
+//                    .fillColor(Color.argb(50, 1, 1, 1)));
+//            aMap.invalidate();//刷新地图
+//        }
     }
 
     /**
@@ -132,46 +205,6 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
 
     }
 
-
-    class MyOnClickListener implements View.OnClickListener {
-            @Override
-            public void onClick(View v) { // 点击事件的处理方法
-                if (v.getId() == R.id.btn_gps) {
-                    if(aMap.isMyLocationEnabled())
-                    {
-                        double la = aMap.getMyLocation().getLatitude();
-                        double lo = aMap.getMyLocation().getLongitude();
-                        //Toast.makeText(getApplicationContext(), " la：" +la+" lo: "+lo, Toast.LENGTH_SHORT).show();
-                        //Toast.makeText(getApplicationContext(), " point num：" +latLngs.size(), Toast.LENGTH_SHORT).show();
-                        getArea(latLngs);
-                    }
-                }
-                else if(v.getId() == R.id.btn_reset)
-                {
-                    if(marker != null)  //清除全部的多边形和点
-                    {
-                        polygon.remove();                       //删除多边形
-                        for (Marker marker : mMarkers) {        //遍历删除点
-                            //marker.remove();
-                            marker.destroy();
-                        }
-                        mMarkers.clear();                       //删除点集合
-                        latLngs.clear();                        //删除坐标集合
-                        aMap.invalidate();//刷新地图
-                    }
-                    Toast.makeText(getApplicationContext(), " Btn  click" +latLngs.size(), Toast.LENGTH_SHORT).show();
-                }
-            }
-        }
-
-    public void  getArea(List<LatLng> latLngs)  {
-        double area = 0;
-        //to do
-
-
-        Toast.makeText(getApplicationContext(), " point num：" +latLngs.size() + "Area ： " +area + " 单位", Toast.LENGTH_SHORT).show();
-
-    }
     @Override
     protected void onDestroy() {
         super.onDestroy();
