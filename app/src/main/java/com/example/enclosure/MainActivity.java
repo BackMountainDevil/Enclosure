@@ -55,6 +55,14 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
         if (aMap == null) {
             aMap = mMapView.getMap();
             setUpMap();
+
+            btn_click = findViewById(R.id.btn_gps);
+            btn_down = findViewById(R.id.btn_reset);
+            btn_maker = findViewById(R.id.btn_maker);
+
+            btn_click.setOnClickListener(new MyOnClickListener());
+            btn_down.setOnClickListener(new MyOnClickListener());
+            btn_maker.setOnClickListener(new MyOnClickListener());
         }
     }
 
@@ -63,21 +71,12 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
      */
     private void setUpMap() {
         mUiSettings = aMap.getUiSettings();//实例化UiSettings类对象
-        aMap.setMapType(AMap.MAP_TYPE_SATELLITE);       //卫星地图模式
+        aMap.setMapType(AMap.MAP_TYPE_SATELLITE);       //卫星地图模式，不显示文字？？
+        //aMap.setMapType(AMap.MAP_TYPE_NORMAL);              //普通地图模式
 
-        //定位按钮
         mUiSettings.setMyLocationButtonEnabled(true); //显示默认的定位按钮
         mUiSettings.setZoomControlsEnabled(false);  //取消显示默认的缩放按钮
         aMap.setMyLocationEnabled(true);// 可触发定位并显示当前位置
-
-
-        btn_click = findViewById(R.id.btn_gps);
-        btn_down = findViewById(R.id.btn_reset);
-        btn_maker = findViewById(R.id.btn_maker);
-
-        btn_click.setOnClickListener(new MyOnClickListener());
-        btn_down.setOnClickListener(new MyOnClickListener());
-        btn_maker.setOnClickListener(new MyOnClickListener());
 
         aMap.setOnMapClickListener(this);// 对amap添加单击地图事件监听器
         aMap.setOnMapLongClickListener(this);// 对amap添加长按地图事件监听器
@@ -132,12 +131,36 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
             }
         }
 
+    /**
+     * 计算圈地面积
+     */
     public void  getArea(List<LatLng> latLngs)  {
         double area = 0;
-        //to do
+        int num = latLngs.size();
+        int j, k;//开始第一步排序
+        for (j = 0; j < num - 1; j++) {
+            for (k = 0; k < num - 1 - j; k++) {
+                if (latLngs.get(k).longitude > latLngs.get(k + 1).longitude)
+                    Collections.swap(latLngs, k, (k + 1));
+            }
+            int m, n;//开始逆时针排序
+            for (m = 1; m < num - 1; m++) {
+                for (n = 1; n < num - m; n++) {
+                    double cos1 = (latLngs.get(n).latitude - latLngs.get(0).latitude) / Math.sqrt(Math.pow((latLngs.get(n).latitude - latLngs.get(0).latitude), 2) + Math.pow((latLngs.get(n).longitude - latLngs.get(0).longitude), 2));
+                    double cos2 = (latLngs.get(n + 1).latitude - latLngs.get(0).latitude) / Math.sqrt(Math.pow((latLngs.get(n + 1).latitude - latLngs.get(0).latitude), 2) + Math.pow((latLngs.get(n + 1).longitude - latLngs.get(0).longitude), 2));
+                    if (cos1 > cos2)
+                        Collections.swap(latLngs, n, (n + 1));
+                }
+            }
+            area = latLngs.get(num - 1).latitude * latLngs.get(0).longitude - latLngs.get(0).latitude * latLngs.get(num - 1).longitude;
+            for (int h = 0; h < num - 1; h++) {
+                area = area + latLngs.get(h).latitude * latLngs.get(h + 1).longitude - latLngs.get(h).longitude * latLngs.get(h + 1).latitude;
+            }
+            area = 0.5 * Math.abs(area);
 
+        }
 
-        Toast.makeText(getApplicationContext(), " point num：" +latLngs.size() + "Area ： " +area + " 单位", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getApplicationContext(),  "Area ： " +area + " 单位", Toast.LENGTH_SHORT).show();
 
     }
 
@@ -145,7 +168,6 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
     {
         //定位到当前位置并标记Maker
         //参考onMapClick(）
-
         Toast.makeText(getApplicationContext(), "GPS采点接口" , Toast.LENGTH_SHORT).show();
     }
 
@@ -160,6 +182,7 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
             }
             mMarkers.clear();                       //删除点集合
             latLngs.clear();                        //删除坐标集合
+            aMap.clear();
             aMap.invalidate();//刷新地图
         }
         else
