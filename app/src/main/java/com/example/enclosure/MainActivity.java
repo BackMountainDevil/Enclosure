@@ -55,6 +55,14 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
         if (aMap == null) {
             aMap = mMapView.getMap();
             setUpMap();
+
+            btn_click = findViewById(R.id.btn_gps);
+            btn_down = findViewById(R.id.btn_reset);
+            btn_maker = findViewById(R.id.btn_maker);
+
+            btn_click.setOnClickListener(new MyOnClickListener());
+            btn_down.setOnClickListener(new MyOnClickListener());
+            btn_maker.setOnClickListener(new MyOnClickListener());
         }
     }
 
@@ -65,19 +73,9 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
         mUiSettings = aMap.getUiSettings();//实例化UiSettings类对象
         aMap.setMapType(AMap.MAP_TYPE_SATELLITE);       //卫星地图模式
 
-        //定位按钮
         mUiSettings.setMyLocationButtonEnabled(true); //显示默认的定位按钮
         mUiSettings.setZoomControlsEnabled(false);  //取消显示默认的缩放按钮
         aMap.setMyLocationEnabled(true);// 可触发定位并显示当前位置
-
-
-        btn_click = findViewById(R.id.btn_gps);
-        btn_down = findViewById(R.id.btn_reset);
-        btn_maker = findViewById(R.id.btn_maker);
-
-        btn_click.setOnClickListener(new MyOnClickListener());
-        btn_down.setOnClickListener(new MyOnClickListener());
-        btn_maker.setOnClickListener(new MyOnClickListener());
 
         aMap.setOnMapClickListener(this);// 对amap添加单击地图事件监听器
         aMap.setOnMapLongClickListener(this);// 对amap添加长按地图事件监听器
