@@ -2,8 +2,22 @@ package com.example.enclosure;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
+import android.Manifest;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.location.LocationProvider;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -23,7 +37,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickListener,
+public class MainActivity extends AppCompatActivity implements AMap.OnMapClickListener,
         AMap.OnMapLongClickListener, AMap.OnCameraChangeListener {
     private MapView mMapView = null;
     private AMap aMap = null;
@@ -35,8 +49,11 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
     private Button btn_click;
     private Button btn_down;
     private Button btn_maker;
-
-
+    private static final int GAODE_READ_PHONE_STATE = 100;//定位权限请求
+    private static final int PRIVATE_CODE = 1315;//开启GPS权限
+    static final String[] LOCATIONGPS = new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.READ_PHONE_STATE};
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -93,14 +110,15 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
         //Toast.makeText(getApplicationContext(), "tapped, point=" + point, Toast.LENGTH_SHORT).show();
         latLngs.add(point);
         marker = aMap.addMarker(new MarkerOptions().position(point).title("").snippet("DefaultMarker"));        //在地图上标记点
-        marker.setSnippet(marker.getId()+marker.getPosition());
+        marker.setSnippet(marker.getId() + marker.getPosition());
         mMarkers.add(marker);
 
         //手动绘制圈地部分，如果边框的起点与终点不一致，API会自动将它封闭。test best
-        if(latLngs.size() >= 3)
-        {
-            if(polygon != null)         //清除上一次的图形，避免重叠变丑
-            {polygon.remove();}
+        if (latLngs.size() >= 3) {
+            if (polygon != null)         //清除上一次的图形，避免重叠变丑
+            {
+                polygon.remove();
+            }
             polygon = aMap.addPolygon(new PolygonOptions().addAll(Collections.unmodifiableList(latLngs))
                     .strokeColor(Color.argb(50, 1, 1, 1))
                     .fillColor(Color.argb(50, 1, 1, 1)));
@@ -113,40 +131,158 @@ public class MainActivity extends AppCompatActivity  implements AMap.OnMapClickL
      * 按钮短按时回调
      */
     class MyOnClickListener implements View.OnClickListener {
-            @Override
-            public void onClick(View v) { // 点击事件的处理方法
-                if (v.getId() == R.id.btn_gps) {        //完成，弹窗显示点位坐标和面积，请求输入
-                    if(aMap.isMyLocationEnabled())
-                    {
-                        getArea(latLngs);
-                    }
+        @Override
+        public void onClick(View v) { // 点击事件的处理方法
+            if (v.getId() == R.id.btn_gps) {        //完成，弹窗显示点位坐标和面积，请求输入
+                if (aMap.isMyLocationEnabled()) {
+                    getArea(latLngs);
                 }
-                else if(v.getId() == R.id.btn_reset)        //撤销
-                {
-                    clearAll();
-                }
-                else if(v.getId() == R.id.btn_maker)        //gps采点
-                {
-                    gpsMaker();
-                }
+            } else if (v.getId() == R.id.btn_reset)        //撤销
+            {
+                clearAll();
+            } else if (v.getId() == R.id.btn_maker)        //gps采点
+            {
+                gpsMaker();
             }
         }
-
-    public void  getArea(List<LatLng> latLngs)  {
-        double area = 0;
-        //to do
-
-
-        Toast.makeText(getApplicationContext(), " point num：" +latLngs.size() + "Area ： " +area + " 单位", Toast.LENGTH_SHORT).show();
-
     }
 
-    public void gpsMaker()
-    {
+    public void getArea(List<LatLng> latLngs) {
+        double area = 0;
+        //to do
+        int num = latLngs.size();
+        int j, k;//开始第一步排序
+        for (j = 0; j < num - 1; j++) {
+            for (k = 0; k < num - 1 - j; k++) {
+                if (latLngs.get(k).longitude > latLngs.get(k + 1).longitude)
+                    Collections.swap(latLngs, k, (k + 1));
+            }
+            int m, n;//开始逆时针排序
+            for (m = 1; m < num - 1; m++) {
+                for (n = 1; n < num - m; n++) {
+                    double cos1 = (latLngs.get(n).latitude - latLngs.get(0).latitude) / Math.sqrt(Math.pow((latLngs.get(n).latitude - latLngs.get(0).latitude), 2) + Math.pow((latLngs.get(n).longitude - latLngs.get(0).longitude), 2));
+                    double cos2 = (latLngs.get(n + 1).latitude - latLngs.get(0).latitude) / Math.sqrt(Math.pow((latLngs.get(n + 1).latitude - latLngs.get(0).latitude), 2) + Math.pow((latLngs.get(n + 1).longitude - latLngs.get(0).longitude), 2));
+                    if (cos1 > cos2)
+                        Collections.swap(latLngs, n, (n + 1));
+                }
+            }
+            area = latLngs.get(num - 1).latitude * latLngs.get(0).longitude - latLngs.get(0).latitude * latLngs.get(num - 1).longitude;
+            for (int h = 0; h < num - 1; h++) {
+                area = area + latLngs.get(h).latitude * latLngs.get(h + 1).longitude - latLngs.get(h).longitude * latLngs.get(h + 1).latitude;
+            }
+            area = 0.5 * Math.abs(area) * 9101160000.085981 / 1000000;
+
+        }
+
+        Toast.makeText(getApplicationContext(), " point num：" + latLngs.size() + "Area ： " + area + "平方千米", Toast.LENGTH_SHORT).show();
+    }
+    public void showGPSContacts() {
+        LocationManager lm = (LocationManager) this.getSystemService(this.LOCATION_SERVICE);
+        boolean ok = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
+        if (ok) {//开了定位服务
+            if (Build.VERSION.SDK_INT >= 23) { //判断是否为android6.0系统版本，如果是，需要动态添加权限
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED) {// 没有权限，申请权限。
+                    ActivityCompat.requestPermissions(this, LOCATIONGPS,
+                            GAODE_READ_PHONE_STATE);
+                } else {
+                    gpsMaker();//getLocation为定位方法
+                }
+            } else {
+                gpsMaker();//getLocation为定位方法
+            }
+        } else {
+            Toast.makeText(this, "系统检测到未开启GPS定位服务,请开启", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent();
+            intent.setAction(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+            startActivityForResult(intent, PRIVATE_CODE);
+        }
+    }
+    private void updateLocation(Location lc) {
+        if (lc != null) {
+            double lat = lc.getLatitude();
+            double lon = lc.getLongitude();
+            LatLng ll = new LatLng(lat, lon);
+            latLngs.add(ll);
+            marker = aMap.addMarker(new MarkerOptions().position(ll).title("").snippet("DefaultMarker"));        //在地图上标记点
+            marker.setSnippet(marker.getId() + marker.getPosition());
+            mMarkers.add(marker);
+            Toast.makeText(getApplicationContext(), "GPS采点接口", Toast.LENGTH_SHORT).show();
+
+        } else {
+            Toast.makeText(getApplicationContext(), "无法获取当前位置信息", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void gpsMaker() {
+
         //定位到当前位置并标记Maker
         //参考onMapClick(）
+        LocationManager locationManager;
+        String serviceName = Context.LOCATION_SERVICE;
+        locationManager = (LocationManager) this.getSystemService(serviceName);
+        // 查找到服务信息
+        Criteria criteria = new Criteria();
+        criteria.setAccuracy(Criteria.ACCURACY_FINE); // 高精度
+        criteria.setAltitudeRequired(false);
+        criteria.setBearingRequired(false);
+        criteria.setCostAllowed(true);
+        criteria.setPowerRequirement(Criteria.POWER_LOW); // 低功耗
+        String provider = locationManager.getBestProvider(criteria, true); // 获取GPS信息
+        /**这段代码不需要深究，是locationManager.getLastKnownLocation(provider)自动生成的，不加会出错**/
 
-        Toast.makeText(getApplicationContext(), "GPS采点接口" , Toast.LENGTH_SHORT).show();
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        Location lc = locationManager.getLastKnownLocation(provider); // 通过GPS获取位置
+        updateLocation(lc);
+        /*Location lc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+        double lat=lc.getLatitude();
+        double lon=lc.getLongitude();
+        LatLng ll=new LatLng(lat,lon);
+        latLngs.add(ll);
+        marker = aMap.addMarker(new MarkerOptions().position(ll).title("").snippet("DefaultMarker"));        //在地图上标记点
+        marker.setSnippet(marker.getId() + marker.getPosition());
+        mMarkers.add(marker);*/
+
+
+        //Toast.makeText(getApplicationContext(), "GPS采点接口" , Toast.LENGTH_SHORT).show();
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            // requestCode即所声明的权限获取码，在checkSelfPermission时传入
+            case GAODE_READ_PHONE_STATE:
+                //如果用户取消，permissions可能为null.
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults.length > 0) { //有权限
+                    // 获取到权限，作相应处理
+                    gpsMaker();
+                } else {
+                    showGPSContacts();
+                }
+                break;
+            default:
+                break;
+        }
+    }
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+            case PRIVATE_CODE:
+                showGPSContacts();
+                break;
+
+        }
     }
 
     public void clearAll()
