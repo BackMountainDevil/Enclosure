@@ -3,6 +3,7 @@ package com.example.enclosure;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
@@ -18,10 +19,17 @@ import android.location.LocationProvider;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.amap.api.location.AMapLocation;
+import com.amap.api.location.AMapLocationClient;
+import com.amap.api.location.AMapLocationClientOption;
+import com.amap.api.location.AMapLocationListener;
 import com.amap.api.maps2d.AMap;
 import com.amap.api.maps2d.MapView;
 import com.amap.api.maps2d.UiSettings;
@@ -31,6 +39,7 @@ import com.amap.api.maps2d.model.Marker;
 import com.amap.api.maps2d.model.MarkerOptions;
 import com.amap.api.maps2d.model.Polygon;
 import com.amap.api.maps2d.model.PolygonOptions;
+import com.amap.api.services.core.LatLonPoint;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,6 +48,14 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements AMap.OnMapClickListener,
         AMap.OnMapLongClickListener, AMap.OnCameraChangeListener {
+    //权限设置
+    private static final int REQUEST_PERMISSION_LOCATION = 0;
+    //声明AMapLocationClient类对象
+    AMapLocationClient mLocationClient = null;
+    //声明AMapLocationClientOption对象
+    public AMapLocationClientOption mLocationOption = null;
+
+    private TextView tv_action;
     private MapView mMapView = null;
     private AMap aMap = null;
     private UiSettings mUiSettings;                     //定位按钮
@@ -49,11 +66,9 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     private Button btn_click;
     private Button btn_down;
     private Button btn_maker;
-    private static final int GAODE_READ_PHONE_STATE = 100;//定位权限请求
-    private static final int PRIVATE_CODE = 1315;//开启GPS权限
-    static final String[] LOCATIONGPS = new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.READ_PHONE_STATE};
+    private AMapLocationClient locationClient = null;
+    private AMapLocationClientOption locationOption = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,8 +77,9 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         mMapView = findViewById(R.id.mapview);       //获取地图控件引用
         mMapView.onCreate(savedInstanceState);// 此方法须覆写，虚拟机需要在很多情况下保存地图绘制的当前状态。
         init();
+        //初始化定位
+        initLocation();
     }
-
 
     /**
      * 初始化AMap对象 - 地图控制器
@@ -146,6 +162,89 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
             }
         }
     }
+    /**
+     * 初始化定位
+     */
+    private void initLocation(){
+        //初始化client
+        locationClient = new AMapLocationClient(this.getApplicationContext());
+        locationOption = getDefaultOption();
+        //设置定位参数
+        locationClient.setLocationOption(locationOption);
+        // 设置定位监听
+        locationClient.setLocationListener(locationListener);
+    }
+    /**
+     * 默认的定位参数
+     * @since 2.8.0
+     * @author hongming.wang
+     *
+     */
+    private AMapLocationClientOption getDefaultOption(){
+        AMapLocationClientOption mOption = new AMapLocationClientOption();
+        mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);//可选，设置定位模式，可选的模式有高精度、仅设备、仅网络。默认为高精度模式
+        mOption.setGpsFirst(true);//可选，设置是否gps优先，只在高精度模式下有效。默认关闭
+        mOption.setHttpTimeOut(30000);//可选，设置网络请求超时时间。默认为30秒。在仅设备模式下无效
+        mOption.setInterval(2000);//可选，设置定位间隔。默认为2秒
+        mOption.setNeedAddress(true);//可选，设置是否返回逆地理地址信息。默认是true
+        mOption.setOnceLocation(true);//可选，设置是否单次定位。默认是false
+        mOption.setOnceLocationLatest(true);//可选，设置是否等待wifi刷新，默认为false.如果设置为true,会自动变为单次定位，持续定位时不要使用
+        AMapLocationClientOption.setLocationProtocol(AMapLocationClientOption.AMapLocationProtocol.HTTP);//可选， 设置网络请求的协议。可选HTTP或者HTTPS。默认为HTTP
+        mOption.setSensorEnable(false);//可选，设置是否使用传感器。默认是false
+        mOption.setWifiScan(false); //可选，设置是否开启wifi扫描。默认为true，如果设置为false会同时停止主动刷新，停止以后完全依赖于系统刷新，定位位置可能存在误差
+        mOption.setLocationCacheEnable(true); //可选，设置是否使用缓存定位，默认为true
+        mOption.setGeoLanguage(AMapLocationClientOption.GeoLanguage.DEFAULT);//可选，设置逆地理信息的语言，默认值为默认语言（根据所在地区选择语言）
+        return mOption;
+    }
+    /**
+     * 定位监听
+     */
+    AMapLocationListener locationListener = new AMapLocationListener() {
+        @Override
+        public void onLocationChanged(AMapLocation location) {
+            if (null != location) {
+
+                StringBuffer sb = new StringBuffer();
+                //errCode等于0代表定位成功，其他的为定位失败，具体的可以参照官网定位错误码说明
+                if(location.getErrorCode() == 0){
+                    double lon=location.getLongitude();
+                    double lat=location.getLatitude();
+                    LatLng ll=new LatLng(lon,lat);
+                    latLngs.add(ll);
+                    marker = aMap.addMarker(new MarkerOptions().position(ll).title("").snippet("DefaultMarker"));        //在地图上标记点
+                    marker.setSnippet(marker.getId() + marker.getPosition());
+                    mMarkers.add(marker);
+                    /*sb.append("定位成功" + "\n");
+                    sb.append("定位类型: " + location.getLocationType() + "\n");
+                    sb.append("经    度    : " + location.getLongitude() + "\n");
+                    sb.append("纬    度    : " + location.getLatitude() + "\n");
+                    sb.append("精    度    : " + location.getAccuracy() + "米" + "\n");
+                    sb.append("提供者    : " + location.getProvider() + "\n");
+
+                    sb.append("速    度    : " + location.getSpeed() + "米/秒" + "\n");
+                    sb.append("角    度    : " + location.getBearing() + "\n");
+                    // 获取当前提供定位服务的卫星个数
+                    sb.append("星    数    : " + location.getSatellites() + "\n");
+                    sb.append("国    家    : " + location.getCountry() + "\n");
+                    sb.append("省            : " + location.getProvince() + "\n");
+                    sb.append("市            : " + location.getCity() + "\n");
+                    sb.append("城市编码 : " + location.getCityCode() + "\n");
+                    sb.append("区            : " + location.getDistrict() + "\n");
+                    sb.append("区域 码   : " + location.getAdCode() + "\n");
+                    sb.append("地    址    : " + location.getAddress() + "\n");
+                    sb.append("兴趣点    : " + location.getPoiName() + "\n");
+                    //定位完成的时间
+                    //sb.append("定位时间: " + Utils.formatUTC(location.getTime(), "yyyy-MM-dd HH:mm:ss") + "\n");*/
+                } else {
+                    //定位失败
+                    Toast.makeText(getApplicationContext(), "定位失败" , Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(getApplicationContext(), "定位失败，地点不存在" , Toast.LENGTH_SHORT).show();
+            }
+        }
+    };
+
 
     public void getArea(List<LatLng> latLngs) {
         double area = 0;
@@ -176,115 +275,43 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
 
         Toast.makeText(getApplicationContext(), " point num：" + latLngs.size() + "Area ： " + area + "平方千米", Toast.LENGTH_SHORT).show();
     }
-    public void showGPSContacts() {
-        LocationManager lm = (LocationManager) this.getSystemService(this.LOCATION_SERVICE);
-        boolean ok = lm.isProviderEnabled(LocationManager.GPS_PROVIDER);
-        if (ok) {//开了定位服务
-            if (Build.VERSION.SDK_INT >= 23) { //判断是否为android6.0系统版本，如果是，需要动态添加权限
-                if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                        != PackageManager.PERMISSION_GRANTED) {// 没有权限，申请权限。
-                    ActivityCompat.requestPermissions(this, LOCATIONGPS,
-                            GAODE_READ_PHONE_STATE);
-                } else {
-                    gpsMaker();//getLocation为定位方法
-                }
-            } else {
-                gpsMaker();//getLocation为定位方法
-            }
-        } else {
-            Toast.makeText(this, "系统检测到未开启GPS定位服务,请开启", Toast.LENGTH_SHORT).show();
-            Intent intent = new Intent();
-            intent.setAction(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-            startActivityForResult(intent, PRIVATE_CODE);
-        }
-    }
-    private void updateLocation(Location lc) {
-        if (lc != null) {
-            double lat = lc.getLatitude();
-            double lon = lc.getLongitude();
-            LatLng ll = new LatLng(lat, lon);
-            latLngs.add(ll);
-            marker = aMap.addMarker(new MarkerOptions().position(ll).title("").snippet("DefaultMarker"));        //在地图上标记点
-            marker.setSnippet(marker.getId() + marker.getPosition());
-            mMarkers.add(marker);
-            Toast.makeText(getApplicationContext(), "GPS采点接口", Toast.LENGTH_SHORT).show();
 
-        } else {
-            Toast.makeText(getApplicationContext(), "无法获取当前位置信息", Toast.LENGTH_SHORT).show();
-        }
-    }
 
     public void gpsMaker() {
-
+        //根据控件的选择，重新设置定位参数
+        //resetOption();
+        // 设置定位参数
+        locationClient.setLocationOption(locationOption);
+        // 启动定位
+        locationClient.startLocation();
+/*
         //定位到当前位置并标记Maker
         //参考onMapClick(）
-        LocationManager locationManager;
-        String serviceName = Context.LOCATION_SERVICE;
-        locationManager = (LocationManager) this.getSystemService(serviceName);
-        // 查找到服务信息
-        Criteria criteria = new Criteria();
-        criteria.setAccuracy(Criteria.ACCURACY_FINE); // 高精度
-        criteria.setAltitudeRequired(false);
-        criteria.setBearingRequired(false);
-        criteria.setCostAllowed(true);
-        criteria.setPowerRequirement(Criteria.POWER_LOW); // 低功耗
-        String provider = locationManager.getBestProvider(criteria, true); // 获取GPS信息
-        /**这段代码不需要深究，是locationManager.getLastKnownLocation(provider)自动生成的，不加会出错**/
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        Location lc = locationManager.getLastKnownLocation(provider); // 通过GPS获取位置
-        updateLocation(lc);
-        /*Location lc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-
-        double lat=lc.getLatitude();
-        double lon=lc.getLongitude();
-        LatLng ll=new LatLng(lat,lon);
-        latLngs.add(ll);
-        marker = aMap.addMarker(new MarkerOptions().position(ll).title("").snippet("DefaultMarker"));        //在地图上标记点
-        marker.setSnippet(marker.getId() + marker.getPosition());
-        mMarkers.add(marker);*/
-
-
-        //Toast.makeText(getApplicationContext(), "GPS采点接口" , Toast.LENGTH_SHORT).show();
+        //Toast.makeText(getApplicationContext(), "GPS采点接口" , Toast.LENGTH_SHORT).show();*/
     }
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            // requestCode即所声明的权限获取码，在checkSelfPermission时传入
-            case GAODE_READ_PHONE_STATE:
-                //如果用户取消，permissions可能为null.
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults.length > 0) { //有权限
-                    // 获取到权限，作相应处理
-                    gpsMaker();
-                } else {
-                    showGPSContacts();
-                }
-                break;
-            default:
-                break;
-        }
-    }
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        switch (requestCode) {
-            case PRIVATE_CODE:
-                showGPSContacts();
-                break;
-
-        }
+    /**
+     * 定位回调监听器
+     */
+    private void stopLocation(){
+        // 停止定位
+        locationClient.stopLocation();
     }
 
+    /**
+     * 销毁
+     *
+     */
+    private void destroyLocation(){
+        if (null != locationClient) {
+            /**
+             * 如果AMapLocationClient是在当前Activity实例化的，
+             * 在Activity的onDestroy中一定要执行AMapLocationClient的onDestroy
+             */
+            locationClient.onDestroy();
+            locationClient = null;
+            locationOption = null;
+        }
+    }
     public void clearAll()
     {
         if(latLngs.size() != 0)  //清除全部的多边形和点
