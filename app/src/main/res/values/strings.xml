@@ -4,5 +4,4 @@
     <string name="btn_reset">Reset</string>
     <string name="btn_maker">采点</string>
     <string name="btn_change">切换模式</string>
-    <string name="btn_screenshot">截图</string>
 </resources>
