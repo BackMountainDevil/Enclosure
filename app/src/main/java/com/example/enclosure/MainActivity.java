@@ -233,7 +233,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
                     marker = aMap.addMarker(new MarkerOptions().position(ll).title("").snippet("DefaultMarker"));        //在地图上标记点
                     marker.setSnippet(marker.getId() + marker.getPosition());
                     mMarkers.add(marker);
-                    Toast.makeText(getApplicationContext(), "经度："+lon+"\n纬度：" +lat, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "经度："+lon+"     纬度：" +lat, Toast.LENGTH_SHORT).show();
 
                 } else {
                     //定位失败
