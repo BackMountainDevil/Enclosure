@@ -66,7 +66,6 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     private Button btn_click;
     private Button btn_down;
     private Button btn_maker;
-    private Button btn_screenshot;
     private AMapLocationClient locationClient = null;
     private AMapLocationClientOption locationOption = null;
 
@@ -108,12 +107,10 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         btn_click = findViewById(R.id.btn_gps);
         btn_down = findViewById(R.id.btn_reset);
         btn_maker = findViewById(R.id.btn_maker);
-        btn_screenshot = findViewById(R.id.btn_screenshot);
 
         btn_click.setOnClickListener(new MyOnClickListener());
         btn_down.setOnClickListener(new MyOnClickListener());
         btn_maker.setOnClickListener(new MyOnClickListener());
-        btn_screenshot.setOnClickListener(new MyOnClickListener());
 
         aMap.setOnMapClickListener(this);// 对amap添加单击地图事件监听器
         aMap.setOnMapLongClickListener(this);// 对amap添加长按地图事件监听器
@@ -162,11 +159,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
             } else if (v.getId() == R.id.btn_maker)        //gps采点
             {
                 gpsMaker();
-            }else if(v.getId() == R.id.btn_screenshot)  //截图
-            {
-                getScreenShot();
             }
-
         }
     }
     /**
@@ -211,7 +204,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         public void onLocationChanged(AMapLocation location) {
             if (null != location) {
 
-                StringBuilder sb = new StringBuilder();
+                StringBuffer sb = new StringBuffer();
                 //errCode等于0代表定位成功，其他的为定位失败，具体的可以参照官网定位错误码说明
                 if(location.getErrorCode() == 0){
                     double lon=location.getLongitude();
@@ -307,13 +300,13 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     /**
      * 销毁
      *
-     *              * 如果AMapLocationClient是在当前Activity实例化的，
-     *              * 在Activity的onDestroy中一定要执行AMapLocationClient的onDestroy
-     *
      */
     private void destroyLocation(){
         if (null != locationClient) {
-
+            /**
+             * 如果AMapLocationClient是在当前Activity实例化的，
+             * 在Activity的onDestroy中一定要执行AMapLocationClient的onDestroy
+             */
             locationClient.onDestroy();
             locationClient = null;
             locationOption = null;
@@ -335,15 +328,6 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         else
         {Toast.makeText(getApplicationContext(), "尚未标记采点，无需撤销点位" , Toast.LENGTH_SHORT).show();}
     }
-
-    /**
-     * 对截屏进行获取保存
-     */
-    public void getScreenShot()
-    {
-
-    }
-
     /**
      * 对长按地图事件回调
      */
