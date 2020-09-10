@@ -1,10 +1,7 @@
 package com.example.enclosure;
 
 import android.Manifest;
-import android.content.Context;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -12,7 +9,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.amap.api.location.AMapLocation;
@@ -21,11 +17,8 @@ import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
 import com.amap.api.location.AMapLocationQualityReport;
 import com.amap.api.maps2d.AMap;
-import com.amap.api.maps2d.CameraUpdate;
-import com.amap.api.maps2d.CameraUpdateFactory;
 import com.amap.api.maps2d.MapView;
 import com.amap.api.maps2d.UiSettings;
-import com.amap.api.maps2d.model.BitmapDescriptorFactory;
 import com.amap.api.maps2d.model.CameraPosition;
 import com.amap.api.maps2d.model.LatLng;
 import com.amap.api.maps2d.model.Marker;
@@ -34,13 +27,11 @@ import com.amap.api.maps2d.model.Polygon;
 import com.amap.api.maps2d.model.PolygonOptions;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 
-@RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
 public class MainActivity extends AppCompatActivity implements AMap.OnMapClickListener,
         AMap.OnMapLongClickListener, AMap.OnCameraChangeListener {
 
@@ -64,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     private Button btn_maker;
     private AMapLocationClient locationClient = null;
     private AMapLocationClientOption locationOption = null;
-    protected String[] needPermissions = new String[]{
+    protected String[] needPermissions = {
             Manifest.permission.ACCESS_COARSE_LOCATION,
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -78,7 +69,6 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
      * 判断是否需要检测，防止不停的弹框
      */
     private boolean isNeedCheck = true;
-    private Context mContext;
 
     @Override
 
@@ -154,12 +144,9 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     @Override
     public void onMapClick(LatLng point) {
         //Toast.makeText(getApplicationContext(), "tapped, point=" + point, Toast.LENGTH_SHORT).show();
-        Toast.makeText(getApplicationContext(), "经度：" + point.longitude + "     纬度：" + point.latitude, Toast.LENGTH_SHORT).show();
         latLngs.add(point);
         marker = aMap.addMarker(new MarkerOptions().position(point).title("").snippet("DefaultMarker"));        //在地图上标记点
         marker.setSnippet(marker.getId() + marker.getPosition());
-        //double m=marker.getPosition().latitude;
-        //Toast.makeText(getApplicationContext(), "经度：" +m, Toast.LENGTH_SHORT).show();
         mMarkers.add(marker);
 
         //手动绘制圈地部分，如果边框的起点与终点不一致，API会自动将它封闭。test best
@@ -224,35 +211,30 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         mOption.setOnceLocationLatest(true);//可选，设置是否等待wifi刷新，默认为false.如果设置为true,会自动变为单次定位，持续定位时不要使用
         AMapLocationClientOption.setLocationProtocol(AMapLocationClientOption.AMapLocationProtocol.HTTP);//可选， 设置网络请求的协议。可选HTTP或者HTTPS。默认为HTTP
         mOption.setSensorEnable(false);//可选，设置是否使用传感器。默认是false
-        mOption.setWifiScan(false); //可选，设置是否开启wifi扫描。默认为true，如果设置为false会同时停止主动刷新，停止以后完全依赖于系统刷新，定位位置可能存在误差
-        mOption.setLocationCacheEnable(false); //可选，设置是否使用缓存定位，默认为true
+        mOption.setWifiScan(true); //可选，设置是否开启wifi扫描。默认为true，如果设置为false会同时停止主动刷新，停止以后完全依赖于系统刷新，定位位置可能存在误差
+        mOption.setLocationCacheEnable(true); //可选，设置是否使用缓存定位，默认为true
         mOption.setGeoLanguage(AMapLocationClientOption.GeoLanguage.DEFAULT);//可选，设置逆地理信息的语言，默认值为默认语言（根据所在地区选择语言）
         return mOption;
     }
-
     /**
      * 定位监听
      */
-    final AMapLocationListener locationListener = new AMapLocationListener() {
+    AMapLocationListener locationListener = new AMapLocationListener() {
         @Override
         public void onLocationChanged(AMapLocation location) {
             if (null != location) {
                 StringBuffer sb = new StringBuffer();
                 //errCode等于0代表定位成功，其他的为定位失败，具体的可以参照官网定位错误码说明
-                if (location.getErrorCode() == 0) {
-
-                    double lon = location.getLongitude();
-                    double lat = location.getLatitude();
-                    LatLng ll= new LatLng(lon,lat);
-                    Toast.makeText(getApplicationContext(), "已采集当前点：\n经度：" + ll.longitude + "     纬度：" + ll.latitude, Toast.LENGTH_SHORT).show();
-                    LatLng latLng = new LatLng(0,0);
-                    //LatLng latLng = new LatLng(lat, lon);
-                    marker = aMap.addMarker(new MarkerOptions().icon(BitmapDescriptorFactory.fromBitmap(BitmapFactory
-                            .decodeResource(getResources(), R.mipmap.ic_launcher_my))).position(latLng).title("hhh").snippet("hhhh"));
-                    //参数依次是：视角调整区域的中心点坐标、希望调整到的缩放级别、俯仰角0°~45°（垂直与地图时为0）、偏航角 0~360° (正北方为0)
-                    CameraUpdate mCameraUpdate = CameraUpdateFactory.newCameraPosition(new CameraPosition(new LatLng(lat, lon), 18, 30, 0));
-                    aMap.moveCamera(mCameraUpdate);
+                if(location.getErrorCode() == 0){
+                    double lon=location.getLongitude();
+                    double lat=location.getLatitude();
+                    LatLng ll=new LatLng(lon,lat);
                     latLngs.add(ll);
+                    marker = aMap.addMarker(new MarkerOptions().position(ll).title("").snippet("DefaultMarker"));        //在地图上标记点
+                    marker.setSnippet(marker.getId() + marker.getPosition());
+                    mMarkers.add(marker);
+                    Toast.makeText(getApplicationContext(), "经度："+lon+"     纬度：" +lat, Toast.LENGTH_SHORT).show();
+
                 } else {
                     //定位失败
                     sb.append("定位失败" + "\n");
@@ -262,10 +244,10 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
                     //解析定位结果，
                     String result = sb.toString();
                     //定位失败
-                    Toast.makeText(getApplicationContext(), result, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), result , Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(getApplicationContext(), "定位失败，地点不存在", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "定位失败，地点不存在" , Toast.LENGTH_SHORT).show();
             }
         }
     };
@@ -319,10 +301,11 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
             for (int h = 0; h < num - 1; h++) {
                 area = area + latLngs.get(h).latitude * latLngs.get(h + 1).longitude - latLngs.get(h).longitude * latLngs.get(h + 1).latitude;
             }
-            area = 0.5 * Math.abs(area) * 9101160000.085981;
+            area = 0.5 * Math.abs(area) * 9101160000.085981 / 1000000;
+
         }
-        DecimalFormat df = new DecimalFormat("#.00");
-        Toast.makeText(getApplicationContext(), "取点个数：" + latLngs.size() + "\n面积 ： " + df.format(area) + "平方米", Toast.LENGTH_SHORT).show();
+
+        Toast.makeText(getApplicationContext(), "取点个数：" + latLngs.size() + "\n面积 ： " + area + "平方千米", Toast.LENGTH_SHORT).show();
     }
 
 
