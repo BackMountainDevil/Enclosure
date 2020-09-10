@@ -66,6 +66,8 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     private Button btn_click;
     private Button btn_down;
     private Button btn_maker;
+    private Button btn_change;
+    private int MarkerMode = 0;
     private AMapLocationClient locationClient = null;
     private AMapLocationClientOption locationOption = null;
 
@@ -92,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     }
 
     /**
-     * 设置一些aMap的属性,添加一些事件监听器
+     * 设置一些aMap的属性、初始化按钮布局、添加事件监听器
      */
     private void setUpMap() {
         mUiSettings = aMap.getUiSettings();//实例化UiSettings类对象
@@ -107,10 +109,11 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         btn_click = findViewById(R.id.btn_gps);
         btn_down = findViewById(R.id.btn_reset);
         btn_maker = findViewById(R.id.btn_maker);
-
+        btn_change = findViewById(R.id.btn_change);
         btn_click.setOnClickListener(new MyOnClickListener());
         btn_down.setOnClickListener(new MyOnClickListener());
         btn_maker.setOnClickListener(new MyOnClickListener());
+        btn_change.setOnClickListener(new MyOnClickListener());
 
         aMap.setOnMapClickListener(this);// 对amap添加单击地图事件监听器
         aMap.setOnMapLongClickListener(this);// 对amap添加长按地图事件监听器
@@ -119,7 +122,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
 
 
     /**
-     * 对单击地图事件回调，缩放会误触发????
+     * 对单击地图事件回调
      */
     @Override
     public void onMapClick(LatLng point) {
@@ -160,8 +163,25 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
             {
                 gpsMaker();
             }
+            else if (v.getId() == R.id.btn_change)      //模式切换
+            {
+                if(  MarkerMode < 1)
+                {
+                    aMap.setMapType(AMap.MAP_TYPE_NORMAL);      //城市模式
+                    MarkerMode++;
+                }
+                else
+                {
+                    MarkerMode = 0;
+                    aMap.setMapType(AMap.MAP_TYPE_SATELLITE);       //卫星地图模式
+                }
+
+                aMap.invalidate();//刷新地图
+
+            }
         }
     }
+
     /**
      * 初始化定位
      */
@@ -180,6 +200,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
      * @author hongming.wang
      *
      */
+    @NonNull
     private AMapLocationClientOption getDefaultOption(){
         AMapLocationClientOption mOption = new AMapLocationClientOption();
         mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);//可选，设置定位模式，可选的模式有高精度、仅设备、仅网络。默认为高精度模式
@@ -196,6 +217,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         mOption.setGeoLanguage(AMapLocationClientOption.GeoLanguage.DEFAULT);//可选，设置逆地理信息的语言，默认值为默认语言（根据所在地区选择语言）
         return mOption;
     }
+
     /**
      * 定位监听
      */
@@ -245,7 +267,9 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         }
     };
 
-
+    /**
+     * 计算多边形的包围面积：逆时针或者顺时针打点均可
+     */
     public void getArea(List<LatLng> latLngs) {
         double area = 0;
         //to do
@@ -273,7 +297,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
 
         }
 
-        Toast.makeText(getApplicationContext(), " point num：" + latLngs.size() + "Area ： " + area + "平方千米", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getApplicationContext(),  "Area ： " + area + "平方千米", Toast.LENGTH_SHORT).show();
     }
 
 
@@ -392,6 +416,4 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         //在activity执行onSaveInstanceState时执行mMapView.onSaveInstanceState (outState)，保存地图当前的状态
         mMapView.onSaveInstanceState(outState);
     }
-
-
 }
