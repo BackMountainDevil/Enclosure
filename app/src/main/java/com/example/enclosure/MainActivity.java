@@ -1,16 +1,22 @@
 package com.example.enclosure;
 
+import android.Manifest;
+import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
-import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
@@ -24,36 +30,30 @@ import com.amap.api.maps2d.model.MarkerOptions;
 import com.amap.api.maps2d.model.Polygon;
 import com.amap.api.maps2d.model.PolygonOptions;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 
+@RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
 public class MainActivity extends AppCompatActivity implements AMap.OnMapClickListener,
         AMap.OnMapLongClickListener, AMap.OnCameraChangeListener {
-    //权限设置
-    private static final int REQUEST_PERMISSION_LOCATION = 0;
-    //声明AMapLocationClient类对象
-    AMapLocationClient mLocationClient = null;
-    //声明AMapLocationClientOption对象
-    public AMapLocationClientOption mLocationOption = null;
 
-    private TextView tv_action;
     private MapView mMapView = null;
     private AMap aMap = null;
-    private UiSettings mUiSettings;                     //定位按钮
     private Marker marker = null;
-    private List<Marker> mMarkers = new ArrayList<>();
-    private List<LatLng> latLngs = new ArrayList<>();     //坐标列表,可以用latLngs.size()获取点数
+    private final List<Marker> mMarkers = new ArrayList<>();
+    private final List<LatLng> latLngs = new ArrayList<>();     //坐标列表,可以用latLngs.size()获取点数
     private Polygon polygon;                                //圈地封闭区域
-    private Button btn_click;
-    private Button btn_down;
-    private Button btn_maker;
-    private Button btn_change;
     private int MarkerMode = 0;
     private AMapLocationClient locationClient = null;
     private AMapLocationClientOption locationOption = null;
 
+
+    Button shot;
+    Button get;
+    ImageView img;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,6 +61,14 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         setContentView(R.layout.activity_main);
         mMapView = findViewById(R.id.mapview);       //获取地图控件引用
         mMapView.onCreate(savedInstanceState);// 此方法须覆写，虚拟机需要在很多情况下保存地图绘制的当前状态。
+        shot = findViewById(R.id.screen_shot);
+        shot.setOnClickListener(view -> {
+            verifyStoragePermissions(MainActivity.this);
+            ScreenShot.shoot(MainActivity.this);
+        });
+        get = findViewById(R.id.get_screen);
+        img = findViewById(R.id.img_screen);
+        get.setOnClickListener(view -> img.setImageURI(Uri.fromFile(new File(ScreenShot.getPath()))));
         init();
         //初始化定位
         initLocation();
@@ -80,7 +88,8 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
      * 设置一些aMap的属性、初始化按钮布局、添加事件监听器
      */
     private void setUpMap() {
-        mUiSettings = aMap.getUiSettings();//实例化UiSettings类对象
+        //定位按钮
+        UiSettings mUiSettings = aMap.getUiSettings();//实例化UiSettings类对象
         aMap.setMapType(AMap.MAP_TYPE_SATELLITE);       //卫星地图模式
 
         //定位按钮
@@ -89,10 +98,10 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         aMap.setMyLocationEnabled(true);// 可触发定位并显示当前位置
 
 
-        btn_click = findViewById(R.id.btn_gps);
-        btn_down = findViewById(R.id.btn_reset);
-        btn_maker = findViewById(R.id.btn_maker);
-        btn_change = findViewById(R.id.btn_change);
+        Button btn_click = findViewById(R.id.btn_gps);
+        Button btn_down = findViewById(R.id.btn_reset);
+        Button btn_maker = findViewById(R.id.btn_maker);
+        Button btn_change = findViewById(R.id.btn_change);
         btn_click.setOnClickListener(new MyOnClickListener());
         btn_down.setOnClickListener(new MyOnClickListener());
         btn_maker.setOnClickListener(new MyOnClickListener());
@@ -204,49 +213,46 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     /**
      * 定位监听
      */
-    AMapLocationListener locationListener = new AMapLocationListener() {
-        @Override
-        public void onLocationChanged(AMapLocation location) {
-            if (null != location) {
+    final AMapLocationListener locationListener = location -> {
+        if (null != location) {
 
-                StringBuffer sb = new StringBuffer();
-                //errCode等于0代表定位成功，其他的为定位失败，具体的可以参照官网定位错误码说明
-                if(location.getErrorCode() == 0){
-                    double lon=location.getLongitude();
-                    double lat=location.getLatitude();
-                    LatLng ll=new LatLng(lon,lat);
-                    latLngs.add(ll);
-                    marker = aMap.addMarker(new MarkerOptions().position(ll).title("").snippet("DefaultMarker"));        //在地图上标记点
-                    marker.setSnippet(marker.getId() + marker.getPosition());
-                    mMarkers.add(marker);
-                    /*sb.append("定位成功" + "\n");
-                    sb.append("定位类型: " + location.getLocationType() + "\n");
-                    sb.append("经    度    : " + location.getLongitude() + "\n");
-                    sb.append("纬    度    : " + location.getLatitude() + "\n");
-                    sb.append("精    度    : " + location.getAccuracy() + "米" + "\n");
-                    sb.append("提供者    : " + location.getProvider() + "\n");
+            StringBuilder sb = new StringBuilder();
+            //errCode等于0代表定位成功，其他的为定位失败，具体的可以参照官网定位错误码说明
+            if(location.getErrorCode() == 0){
+                double lon=location.getLongitude();
+                double lat=location.getLatitude();
+                LatLng ll=new LatLng(lon,lat);
+                latLngs.add(ll);
+                marker = aMap.addMarker(new MarkerOptions().position(ll).title("").snippet("DefaultMarker"));        //在地图上标记点
+                marker.setSnippet(marker.getId() + marker.getPosition());
+                mMarkers.add(marker);
+                /*sb.append("定位成功" + "\n");
+                sb.append("定位类型: " + location.getLocationType() + "\n");
+                sb.append("经    度    : " + location.getLongitude() + "\n");
+                sb.append("纬    度    : " + location.getLatitude() + "\n");
+                sb.append("精    度    : " + location.getAccuracy() + "米" + "\n");
+                sb.append("提供者    : " + location.getProvider() + "\n");
 
-                    sb.append("速    度    : " + location.getSpeed() + "米/秒" + "\n");
-                    sb.append("角    度    : " + location.getBearing() + "\n");
-                    // 获取当前提供定位服务的卫星个数
-                    sb.append("星    数    : " + location.getSatellites() + "\n");
-                    sb.append("国    家    : " + location.getCountry() + "\n");
-                    sb.append("省            : " + location.getProvince() + "\n");
-                    sb.append("市            : " + location.getCity() + "\n");
-                    sb.append("城市编码 : " + location.getCityCode() + "\n");
-                    sb.append("区            : " + location.getDistrict() + "\n");
-                    sb.append("区域 码   : " + location.getAdCode() + "\n");
-                    sb.append("地    址    : " + location.getAddress() + "\n");
-                    sb.append("兴趣点    : " + location.getPoiName() + "\n");
-                    //定位完成的时间
-                    //sb.append("定位时间: " + Utils.formatUTC(location.getTime(), "yyyy-MM-dd HH:mm:ss") + "\n");*/
-                } else {
-                    //定位失败
-                    Toast.makeText(getApplicationContext(), "定位失败" , Toast.LENGTH_SHORT).show();
-                }
+                sb.append("速    度    : " + location.getSpeed() + "米/秒" + "\n");
+                sb.append("角    度    : " + location.getBearing() + "\n");
+                // 获取当前提供定位服务的卫星个数
+                sb.append("星    数    : " + location.getSatellites() + "\n");
+                sb.append("国    家    : " + location.getCountry() + "\n");
+                sb.append("省            : " + location.getProvince() + "\n");
+                sb.append("市            : " + location.getCity() + "\n");
+                sb.append("城市编码 : " + location.getCityCode() + "\n");
+                sb.append("区            : " + location.getDistrict() + "\n");
+                sb.append("区域 码   : " + location.getAdCode() + "\n");
+                sb.append("地    址    : " + location.getAddress() + "\n");
+                sb.append("兴趣点    : " + location.getPoiName() + "\n");
+                //定位完成的时间
+                //sb.append("定位时间: " + Utils.formatUTC(location.getTime(), "yyyy-MM-dd HH:mm:ss") + "\n");*/
             } else {
-                Toast.makeText(getApplicationContext(), "定位失败，地点不存在" , Toast.LENGTH_SHORT).show();
+                //定位失败
+                Toast.makeText(getApplicationContext(), "定位失败" , Toast.LENGTH_SHORT).show();
             }
+        } else {
+            Toast.makeText(getApplicationContext(), "定位失败，地点不存在" , Toast.LENGTH_SHORT).show();
         }
     };
 
@@ -296,29 +302,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         //参考onMapClick(）
         //Toast.makeText(getApplicationContext(), "GPS采点接口" , Toast.LENGTH_SHORT).show();*/
     }
-    /**
-     * 定位回调监听器
-     */
-    private void stopLocation(){
-        // 停止定位
-        locationClient.stopLocation();
-    }
 
-    /**
-     * 销毁
-     *
-     */
-    private void destroyLocation(){
-        if (null != locationClient) {
-            /**
-             * 如果AMapLocationClient是在当前Activity实例化的，
-             * 在Activity的onDestroy中一定要执行AMapLocationClient的onDestroy
-             */
-            locationClient.onDestroy();
-            locationClient = null;
-            locationOption = null;
-        }
-    }
     public void clearAll()
     {
         if(latLngs.size() != 0)  //清除全部的多边形和点
@@ -399,4 +383,23 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         //在activity执行onSaveInstanceState时执行mMapView.onSaveInstanceState (outState)，保存地图当前的状态
         mMapView.onSaveInstanceState(outState);
     }
+
+    //截图
+    private static final int REQUEST_EXTERNAL_STORAGE = 1;
+    private static final String[] PERMISSIONS_STORAGE = {
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE};
+
+    public static void verifyStoragePermissions(Activity activity) {
+        // Check if we have write permission
+        int permission = ActivityCompat.checkSelfPermission(activity,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            // We don't have permission so prompt the user
+            ActivityCompat.requestPermissions(activity, PERMISSIONS_STORAGE,
+                    REQUEST_EXTERNAL_STORAGE);
+        }
+    }
+
 }
