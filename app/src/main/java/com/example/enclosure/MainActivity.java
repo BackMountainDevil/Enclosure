@@ -23,6 +23,9 @@ import com.amap.api.maps2d.model.Marker;
 import com.amap.api.maps2d.model.MarkerOptions;
 import com.amap.api.maps2d.model.Polygon;
 import com.amap.api.maps2d.model.PolygonOptions;
+import com.amap.api.services.core.LatLonPoint;
+import com.amap.api.services.route.DistanceResult;
+import com.amap.api.services.route.DistanceSearch;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,6 +54,8 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     private Button btn_maker;
     private Button btn_change;
     private int MarkerMode = 0;
+    private DistanceSearch distanceSearch;
+    private double girth = 300000;
     private AMapLocationClient locationClient = null;
     private AMapLocationClientOption locationOption = null;
 
@@ -101,6 +106,9 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         aMap.setOnMapClickListener(this);// 对amap添加单击地图事件监听器
         aMap.setOnMapLongClickListener(this);// 对amap添加长按地图事件监听器
         aMap.setOnCameraChangeListener(this);// 对amap添加移动地图事件监听器
+
+        distanceSearch = new DistanceSearch(this);      //初始化 DistanceSearch 对象
+        distanceSearch.setDistanceSearchListener((DistanceSearch.OnDistanceSearchListener) this);          //设置数据回调监听器
     }
 
 
@@ -254,11 +262,32 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     };
 
     /**
-     * 计算多边形的周长
+     * 计算多边形的周长,单位km
+     *   https://lbs.amap.com/api/android-sdk/guide/computing-equipment/distancesearch
      */
-    public double getGirth(List<LatLng> latLngs) {
+   // @Override
+    public void onDistanceSearched(DistanceResult distanceResult, int errorCode) {
+        if(errorCode == 100)
+        {
+            //succeed
 
-        return 0;
+        }
+        else
+        {
+            //fail
+        }
+    }
+    public double getGirth(List<LatLng> latLngs) {
+        DistanceSearch.DistanceQuery distanceQuery = null;
+        LatLonPoint start = new LatLonPoint(latLngs.get(0).longitude, latLngs.get(0).latitude);
+        List<LatLonPoint> latLonPoints = new ArrayList<LatLonPoint>();
+        latLonPoints.add(start);
+        distanceQuery.setOrigins(latLonPoints);
+        int size = latLngs.size();
+        LatLonPoint dest = new LatLonPoint(latLngs.get(size).longitude, latLngs.get(size).latitude);
+        distanceQuery.setDestination(dest);
+        distanceQuery.setType(DistanceSearch.TYPE_DRIVING_DISTANCE);
+        return girth;
     }
 
     /**
@@ -354,6 +383,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         else
         {Toast.makeText(getApplicationContext(), "尚未标记采点，无需撤销点位" , Toast.LENGTH_SHORT).show();}
     }
+
     /**
      * 对长按地图事件回调
      */
