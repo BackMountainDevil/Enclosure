@@ -152,12 +152,14 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
                 if(  MarkerMode < 1)
                 {
                     aMap.setMapType(AMap.MAP_TYPE_NORMAL);      //城市模式
+                    btn_change.setText("卫星模式");
                     MarkerMode++;
                 }
                 else
                 {
                     MarkerMode = 0;
                     aMap.setMapType(AMap.MAP_TYPE_SATELLITE);       //卫星地图模式
+                    btn_change.setText("标准模式");
                 }
 
                 aMap.invalidate();//刷新地图

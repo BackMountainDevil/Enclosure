@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Enclosure</string>
-    <string name="btn_gps">Get Area</string>
-    <string name="btn_reset">Reset</string>
-    <string name="btn_maker">采点</string>
-    <string name="btn_change">切换模式</string>
+    <string name="btn_gps">完成</string>
+    <string name="btn_reset">撤销</string>
+    <string name="btn_maker">GPS标记</string>
+    <string name="btn_change">卫星模式</string>
 </resources>
