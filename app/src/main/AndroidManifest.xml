@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.enclosure">
+    <!--用于sd卡获取权限-->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"
         tools:ignore="ProtectedPermissions" />
@@ -21,12 +22,16 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <!--写入扩展存储，向扩展卡写入数据，用于写入缓存定位数据-->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAG" />
     <!--用于申请调用A-GPS模块-->
     <uses-permission android:name="android.permission.ACCESS_LOCATION_EXTRA_COMMANDS" />
     <!--用于申请获取蓝牙信息进行室内定位-->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-
+    <!--如果设置了target >= 28 如果需要启动后台定位则必须声明这个权限-->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <!--如果您的应用需要后台定位权限，且有可能运行在Android Q设备上,并且设置了target>28，必须增加这个权限声明-->
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
     <application
         android:allowBackup="true"
         android:requestLegacyExternalStorage="true"
@@ -36,11 +41,11 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:targetApi="q"
-        android:fullBackupContent="@xml/backup_descriptor">
+        tools:ignore="AllowBackup">
 
         <meta-data
             android:name="com.amap.api.v2.apikey"
-            android:value="27356d012b51b8a722d977d5c5966ea1">
+            android:value="3daa0bea26e70d3905536e174195311b">
         </meta-data>
 
         <service android:name="com.amap.api.location.APSService" />
