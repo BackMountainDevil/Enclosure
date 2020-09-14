@@ -1,4 +1,9 @@
 package com.example.enclosure;
+
+import android.util.Log;
+
+import java.util.ArrayList;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
@@ -30,7 +35,10 @@ import com.amap.api.maps2d.model.Polygon;
 import com.amap.api.maps2d.model.PolygonOptions;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 
@@ -142,8 +150,6 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
             aMap.invalidate();//刷新地图
         }
     }
-
-
     /**
      * 按钮短按时回调
      */
@@ -166,7 +172,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
     /**
      * 初始化定位
      */
-    private void initLocation(){
+    private void initLocation() {
         //初始化client
         locationClient = new AMapLocationClient(this.getApplicationContext());
         locationOption = getDefaultOption();
@@ -175,13 +181,14 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         // 设置定位监听
         locationClient.setLocationListener(locationListener);
     }
+
     /**
      * 默认的定位参数
-     * @since 2.8.0
-     * @author hongming.wang
      *
+     * @author hongming.wang
+     * @since 2.8.0
      */
-    private AMapLocationClientOption getDefaultOption(){
+    private AMapLocationClientOption getDefaultOption() {
         AMapLocationClientOption mOption = new AMapLocationClientOption();
         mOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);//可选，设置定位模式，可选的模式有高精度、仅设备、仅网络。默认为高精度模式
         mOption.setGpsFirst(true);//可选，设置是否gps优先，只在高精度模式下有效。默认关闭
@@ -197,6 +204,7 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         mOption.setGeoLanguage(AMapLocationClientOption.GeoLanguage.DEFAULT);//可选，设置逆地理信息的语言，默认值为默认语言（根据所在地区选择语言）
         return mOption;
     }
+
     /**
      * 定位监听
      */
@@ -208,10 +216,10 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
 
                 StringBuilder sb = new StringBuilder();
                 //errCode等于0代表定位成功，其他的为定位失败，具体的可以参照官网定位错误码说明
-                if(location.getErrorCode() == 0){
-                    double lon=location.getLongitude();
-                    double lat=location.getLatitude();
-                    LatLng ll=new LatLng(lon,lat);
+                if (location.getErrorCode() == 0) {
+                    double lon = location.getLongitude();
+                    double lat = location.getLatitude();
+                    LatLng ll = new LatLng(lon, lat);
                     latLngs.add(ll);
                     marker = aMap.addMarker(new MarkerOptions().position(ll).title("").snippet("DefaultMarker"));        //在地图上标记点
                     marker.setSnippet(marker.getId() + marker.getPosition());
@@ -239,14 +247,13 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
                     //sb.append("定位时间: " + Utils.formatUTC(location.getTime(), "yyyy-MM-dd HH:mm:ss") + "\n");*/
                 } else {
                     //定位失败
-                    Toast.makeText(getApplicationContext(), "定位失败" , Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "定位失败", Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(getApplicationContext(), "定位失败，地点不存在" , Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "定位失败，地点不存在", Toast.LENGTH_SHORT).show();
             }
         }
     };
-
 
     public void getArea(List<LatLng> latLngs) {
         double area = 0;
@@ -276,7 +283,24 @@ public class MainActivity extends AppCompatActivity implements AMap.OnMapClickLi
         }
 
         Toast.makeText(getApplicationContext(), " point num：" + latLngs.size() + "Area ： " + area + "平方千米", Toast.LENGTH_SHORT).show();
+
+        try{DBConnection mysql = new DBConnection(area);
+                mysql.mymysql(area);
+            Toast.makeText(getApplicationContext(), "已添加", Toast.LENGTH_SHORT).show();}
+        catch (Exception e) {
+            e.printStackTrace();
+            Toast.makeText(getApplicationContext(), "未添加", Toast.LENGTH_SHORT).show();
+        }
+      //  Write write =new Write(area);
+     //   write.toSql(area);
+        //SQLite sqlite =new SQLite(area);
+       // sqlite.toSql(area);
+
+       // UserDBHelper udb= new UserDBHelper(area);
+        //udb.insert(area);
     }
+
+
 
 
     public void gpsMaker() {

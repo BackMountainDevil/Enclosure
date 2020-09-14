@@ -16,6 +16,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class ScreenShot {
+
     // 获取指定Activity的截屏，保存到png文件
     static String newFilePath;
     private static Bitmap takeScreenShot(Activity activity) {
