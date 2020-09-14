@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="AMap_Location_V5.1.0_20200708.jar" type="JarApplication">
+    <option name="JAR_PATH" value="$PROJECT_DIR$/app/libs/AMap_Location_V5.1.0_20200708.jar" />
+    <option name="ALTERNATIVE_JRE_PATH" />
+    <method v="2" />
+  </configuration>
+</component>
